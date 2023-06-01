@@ -26,20 +26,19 @@ jobs:
       - name: Setup Node  
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '20'
 
       - name: Run Yarn Install
         run: |
-             cd ./packages/app-mobile/
              npm i -g corepack
              yarn install             
       - name: Build application
         run: |
-             cd ./packages/app-mobile/android
+             cd ./android
              ./gradlew assembleDebug             
       - name: Upload application
         uses: actions/upload-artifact@v2
         with:
           name: app
-          path: ./packages/app-mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          path: ./android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 3
