@@ -5,6 +5,7 @@ function App(): JSX.Element {
   return (
     <View>
       <Text>Hello</Text>
+      <Text>Hillow hillow</Text>
     </View>
   );
 }
