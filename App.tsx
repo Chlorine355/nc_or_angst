@@ -6,6 +6,7 @@ function App(): JSX.Element {
     <View>
       <Text>Hello</Text>
       <Text>Hillow hillow</Text>
+      <Text>Третий текст и без сборки на машине?</Text>
     </View>
   );
 }
