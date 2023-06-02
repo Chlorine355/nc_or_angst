@@ -36,10 +36,10 @@ jobs:
         run: |
              cd ./android
              chmod +x ./gradlew
-             ./gradlew assembleDebug             
+             ./gradlew assembleRelease          
       - name: Upload application
         uses: actions/upload-artifact@v2
         with:
           name: app
-          path: ./android/app/build/outputs/apk/debug/app-test-debug.apk
+          path: ./android/app/build/outputs/apk/release/app-release.apk
           retention-days: 3
