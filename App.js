@@ -7,8 +7,8 @@ import {
   Text,
   View,
 } from 'react-native';
-
-import React, {useState} from 'react';
+import * as Animatable from 'react-native-animatable';
+import React, {useState, useRef} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -118,10 +118,13 @@ function Menu({navigation}) {
 
 function Game() {
   const [guessed, setGuessed] = useState(false);
-
   const [isLoading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
   const [corr, setCorr] = useState('');
+
+  const shakeAnimRef = useRef();
+  const pulseAnimRef = useRef();
+
   if (title === '') {
     const correct = Math.random() < 0.5 ? 'nc' : 'angst';
     let request = new XMLHttpRequest();
@@ -158,62 +161,63 @@ function Game() {
 
   return (
     <View>
-      {isLoading ? (
-        <ActivityIndicator />
-      ) : (
-        <Text>
-          {title}
-        </Text>
-      )}
-      <Button
-        title={'NC'}
-        onPress={() => {
-          if (guessed) {
-            return;
-          }
-          if (corr === 'nc') {
-            AsyncStorage.getItem('guessedNC').then(gn => {
-              storeData('guessedNC', (parseInt(gn) + 1).toString());
-            });
-            AsyncStorage.getItem('totalNC').then(gn => {
-              storeData('totalNC', (parseInt(gn) + 1).toString());
-            });
-          } else {
-            AsyncStorage.getItem('totalAngst').then(gn => {
-              storeData('totalAngst', (parseInt(gn) + 1).toString());
-            });
-          }
-          setGuessed(true);
-          setTitle('');
-        }}
-      />
-      <Button
-        title={'Angst'}
-        onPress={() => {
-          if (guessed) {
-            return;
-          }
-          if (corr === 'angst') {
-            AsyncStorage.getItem('guessedAngst').then(gn => {
-              storeData('guessedAngst', (parseInt(gn) + 1).toString());
-            });
-            AsyncStorage.getItem('totalAngst').then(gn => {
-              storeData('totalAngst', (parseInt(gn) + 1).toString());
-            });
-          } else {
-            AsyncStorage.getItem('totalNC').then(gn => {
-              storeData('totalNC', (parseInt(gn) + 1).toString());
-            });
-          }
-          setGuessed(true);
-          setTitle('');
-        }}
-      />
+      {isLoading ? <ActivityIndicator /> : <Text>{title}</Text>}
+      <Animatable.View>
+        <Button
+          title={'NC'}
+          onPress={() => {
+            if (guessed) {
+              return;
+            }
+            if (corr === 'nc') {
+              AsyncStorage.getItem('guessedNC').then(gn => {
+                storeData('guessedNC', (parseInt(gn) + 1).toString());
+              });
+              AsyncStorage.getItem('totalNC').then(gn => {
+                storeData('totalNC', (parseInt(gn) + 1).toString());
+              });
+            } else {
+              AsyncStorage.getItem('totalAngst').then(gn => {
+                storeData('totalAngst', (parseInt(gn) + 1).toString());
+              });
+            }
+            setGuessed(true);
+            setTitle('');
+            setLoading(true);
+          }}
+        />
+      </Animatable.View>
+      <Animatable.View>
+        <Button
+          title={'Angst'}
+          onPress={() => {
+            if (guessed) {
+              return;
+            }
+            if (corr === 'angst') {
+              AsyncStorage.getItem('guessedAngst').then(gn => {
+                storeData('guessedAngst', (parseInt(gn) + 1).toString());
+              });
+              AsyncStorage.getItem('totalAngst').then(gn => {
+                storeData('totalAngst', (parseInt(gn) + 1).toString());
+              });
+            } else {
+              AsyncStorage.getItem('totalNC').then(gn => {
+                storeData('totalNC', (parseInt(gn) + 1).toString());
+              });
+            }
+            setGuessed(true);
+            setTitle('');
+            setLoading(true);
+          }}
+        />
+      </Animatable.View>
     </View>
   );
 }
 
 function Stats() {
+  // guessedNC, guessedAngst, totalNC, totalAngst
   const [s, setS] = useState([]);
   if (s.length === 0) {
     getStats().then(stats => {
@@ -221,7 +225,24 @@ function Stats() {
       setS(stats);
     });
   }
-  return <Text>{s.toString()}</Text>;
+  return (
+    <View>
+      <Text>
+        Отгадано NC: {s[0]}/{s[2]} (
+        {s[2] !== '0'
+          ? ((parseInt(s[0]) / parseInt(s[2])) * 100).toFixed(2)
+          : '0'}
+        %)
+      </Text>
+      <Text>
+        Отгадано Angst: {s[1]}/{s[3]} (
+        {s[3] !== '0'
+          ? ((parseInt(s[1]) / parseInt(s[3])) * 100).toFixed(2)
+          : '0'}
+        %)
+      </Text>
+    </View>
+  );
 }
 
 const Stack = createNativeStackNavigator();
