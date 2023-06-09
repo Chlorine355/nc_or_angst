@@ -5,14 +5,13 @@ import {
   LogBox,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
-import * as Animatable from 'react-native-animatable';
-import React, {useState, useRef} from 'react';
+import React, {useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {Icon} from 'react-native-elements';
 
 LogBox.ignoreAllLogs(); //Ignore all log notifications
 
@@ -121,9 +120,7 @@ function Game() {
   const [isLoading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
   const [corr, setCorr] = useState('');
-
-  const shakeAnimRef = useRef();
-  const pulseAnimRef = useRef();
+  const [r, setR] = useState(false);
 
   if (title === '') {
     const correct = Math.random() < 0.5 ? 'nc' : 'angst';
@@ -160,16 +157,28 @@ function Game() {
   }
 
   return (
-    <View>
-      {isLoading ? <ActivityIndicator /> : <Text>{title}</Text>}
-      <Animatable.View>
-        <Button
-          title={'NC'}
+    <View
+      style={{
+        height: deviceHeight,
+        borderWidth: 5,
+        borderColor: guessed ? (r ? 'green' : 'red') : 'white',
+      }}>
+      <View style={styles.ficname}>
+        {isLoading ? (
+          <ActivityIndicator size="large" />
+        ) : (
+          <Text style={styles.fictitle}>{title}</Text>
+        )}
+      </View>
+      <View style={styles.buttons}>
+        <TouchableOpacity
+          style={styles.button}
           onPress={() => {
             if (guessed) {
               return;
             }
             if (corr === 'nc') {
+              setR(true);
               AsyncStorage.getItem('guessedNC').then(gn => {
                 storeData('guessedNC', (parseInt(gn) + 1).toString());
               });
@@ -177,6 +186,7 @@ function Game() {
                 storeData('totalNC', (parseInt(gn) + 1).toString());
               });
             } else {
+              setR(false);
               AsyncStorage.getItem('totalAngst').then(gn => {
                 storeData('totalAngst', (parseInt(gn) + 1).toString());
               });
@@ -184,17 +194,17 @@ function Game() {
             setGuessed(true);
             setTitle('');
             setLoading(true);
-          }}
-        />
-      </Animatable.View>
-      <Animatable.View>
-        <Button
-          title={'Angst'}
+          }}>
+          <Text style={styles.buttonText}>NC</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
           onPress={() => {
             if (guessed) {
               return;
             }
             if (corr === 'angst') {
+              setR(true);
               AsyncStorage.getItem('guessedAngst').then(gn => {
                 storeData('guessedAngst', (parseInt(gn) + 1).toString());
               });
@@ -202,6 +212,7 @@ function Game() {
                 storeData('totalAngst', (parseInt(gn) + 1).toString());
               });
             } else {
+              setR(false);
               AsyncStorage.getItem('totalNC').then(gn => {
                 storeData('totalNC', (parseInt(gn) + 1).toString());
               });
@@ -209,9 +220,10 @@ function Game() {
             setGuessed(true);
             setTitle('');
             setLoading(true);
-          }}
-        />
-      </Animatable.View>
+          }}>
+          <Text style={styles.buttonText}>Angst</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -226,24 +238,84 @@ function Stats() {
     });
   }
   return (
-    <View>
-      <Text>
+    <View style={styles.statscreen}>
+      <Text style={styles.stat}>
         Отгадано NC: {s[0]}/{s[2]} (
         {s[2] !== '0'
           ? ((parseInt(s[0]) / parseInt(s[2])) * 100).toFixed(2)
           : '0'}
         %)
       </Text>
-      <Text>
+      <Text style={styles.stat}>
         Отгадано Angst: {s[1]}/{s[3]} (
         {s[3] !== '0'
           ? ((parseInt(s[1]) / parseInt(s[3])) * 100).toFixed(2)
           : '0'}
         %)
       </Text>
+
+      <TouchableOpacity
+        style={styles.resetBtn}
+        onPress={() => {
+          storeData('guessedNC', '0');
+          storeData('guessedAngst', '0');
+          storeData('totalNC', '0');
+          storeData('totalAngst', '0');
+          setS(['0', '0', '0', '0']);
+        }}>
+        <Text style={styles.resetBtnText}>Сброс</Text>
+      </TouchableOpacity>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  ficname: {
+    height: 200,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fictitle: {
+    fontSize: 20,
+  },
+  buttons: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    gap: 20,
+    width: deviceWidth,
+  },
+  button: {
+    width: 150,
+    backgroundColor: 'aliceblue',
+    padding: 10,
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: 5,
+  },
+  buttonText: {fontSize: 25},
+  statscreen: {
+    padding: 10,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 50,
+    justifyContent: 'center',
+    height: deviceHeight,
+  },
+  stat: {fontSize: 20},
+  resetBtn: {
+    backgroundColor: 'pink',
+    padding: 20,
+    borderRadius: 5,
+    width: 200,
+    display: 'flex',
+    alignItems: 'center',
+  },
+  resetBtnText: {fontSize: 25, color: 'black'},
+});
 
 const Stack = createNativeStackNavigator();
 
