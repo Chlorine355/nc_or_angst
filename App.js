@@ -1,6 +1,5 @@
 import {
   ActivityIndicator,
-  Button,
   Dimensions,
   LogBox,
   StyleSheet,
@@ -84,10 +83,15 @@ function Menu({navigation}) {
           flexDirection: 'column',
           alignItems: 'center',
           paddingTop: 30,
+          gap: 20,
         }}>
-        <Text style={{color: 'pink', fontSize: 30}}>NC</Text>
-        <Text style={{color: 'black', fontSize: 20}}>or</Text>
-        <Text style={{color: 'red', fontSize: 30}}>ANGST</Text>
+        <Text style={{color: '#ff00a6', fontSize: 50, fontWeight: 'bold'}}>
+          NC
+        </Text>
+        <Text style={{color: 'black', fontSize: 35}}>or</Text>
+        <Text style={{color: 'red', fontSize: 50, fontWeight: 'bold'}}>
+          ANGST
+        </Text>
       </View>
 
       <View
@@ -98,24 +102,26 @@ function Menu({navigation}) {
           paddingTop: 30,
           gap: 30,
         }}>
-        <Button
-          title={'Play'}
+        <TouchableOpacity
+          style={styles.button}
           onPress={() => {
             navigation.navigate('Game');
-          }}
-        />
-        <Button
-          title={'Stats'}
+          }}>
+          <Text style={styles.buttonText}>Play</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
           onPress={() => {
             navigation.navigate('Stats');
-          }}
-        />
+          }}>
+          <Text style={styles.buttonText}>Stats</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-function Game() {
+function Game({navigation}) {
   const [guessed, setGuessed] = useState(false);
   const [isLoading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
@@ -132,8 +138,10 @@ function Game() {
       if (request.status === 200) {
         let HTMLParser = require('fast-html-parser');
         let root = HTMLParser.parse(request.responseText);
+        let titles = root.querySelectorAll('.fanfic-inline-title a'); //.childNodes[0].rawText,
         setTitle(
-          root.querySelector('.fanfic-inline-title a').childNodes[0].rawText,
+          titles[Math.floor(Math.random() * titles.length)].childNodes[0]
+            .rawText,
         );
         setCorr(correct);
         setGuessed(false);
@@ -160,8 +168,8 @@ function Game() {
     <View
       style={{
         height: deviceHeight,
-        borderWidth: 5,
-        borderColor: guessed ? (r ? 'green' : 'red') : 'white',
+        borderWidth: 10,
+        borderColor: guessed ? (r ? 'green' : 'red') : 'transparent',
       }}>
       <View style={styles.ficname}>
         {isLoading ? (
@@ -172,7 +180,16 @@ function Game() {
       </View>
       <View style={styles.buttons}>
         <TouchableOpacity
-          style={styles.button}
+          style={[
+            styles.button,
+            {
+              shadowColor: '#ff00a6',
+              shadowRadius: 20,
+              shadowOpacity: 0.95,
+              shadowOffset: {width: 0, height: 0},
+              elevation: 10,
+            },
+          ]}
           onPress={() => {
             if (guessed) {
               return;
@@ -198,7 +215,16 @@ function Game() {
           <Text style={styles.buttonText}>NC</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.button}
+          style={[
+            styles.button,
+            {
+              shadowColor: 'red',
+              shadowRadius: 20,
+              shadowOpacity: 0.95,
+              shadowOffset: {width: 0, height: 0},
+              elevation: 10,
+            },
+          ]}
           onPress={() => {
             if (guessed) {
               return;
@@ -224,11 +250,12 @@ function Game() {
           <Text style={styles.buttonText}>Angst</Text>
         </TouchableOpacity>
       </View>
+      <BackButton navigation={navigation} top={0} left={0} />
     </View>
   );
 }
 
-function Stats() {
+function Stats({navigation}) {
   // guessedNC, guessedAngst, totalNC, totalAngst
   const [s, setS] = useState([]);
   if (s.length === 0) {
@@ -239,6 +266,7 @@ function Stats() {
   }
   return (
     <View style={styles.statscreen}>
+      <BackButton navigation={navigation} />
       <Text style={styles.stat}>
         Отгадано NC: {s[0]}/{s[2]} (
         {s[2] !== '0'
@@ -269,22 +297,35 @@ function Stats() {
   );
 }
 
+function BackButton({navigation, top = 10, left = 10}) {
+  return (
+    <TouchableOpacity
+      style={{position: 'absolute', top: top, left: left}}
+      onPress={() => {
+        navigation.navigate('Menu');
+      }}>
+      <Text>Back to Menu</Text>
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
   ficname: {
     height: 200,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: 50,
   },
-  fictitle: {
-    fontSize: 20,
-  },
+  fictitle: {textAlign: 'center', fontSize: 20},
   buttons: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'column',
-    gap: 20,
+    gap: 50,
+    paddingTop: 50,
+    marginLeft: -10,
     width: deviceWidth,
   },
   button: {
