@@ -31,6 +31,7 @@ const initStats = async () => {
     const guessedAngst = await AsyncStorage.getItem('guessedAngst');
     const totalNC = await AsyncStorage.getItem('totalNC');
     const totalAngst = await AsyncStorage.getItem('totalAngst');
+    const maxStreak = await AsyncStorage.getItem('maxStreak');
     if (!totalNC) {
       await storeData('totalNC', '0');
     }
@@ -46,6 +47,11 @@ const initStats = async () => {
     if (!guessedAngst) {
       await storeData('guessedAngst', '0');
     }
+
+    if (!maxStreak) {
+      await storeData('maxStreak', '0');
+    }
+
     console.log('stats initialised');
   } catch (err) {
     // saving error
@@ -127,6 +133,8 @@ function Game({navigation}) {
   const [title, setTitle] = useState('');
   const [corr, setCorr] = useState('');
   const [r, setR] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
 
   if (title === '') {
     const correct = Math.random() < 0.5 ? 'nc' : 'angst';
@@ -144,11 +152,15 @@ function Game({navigation}) {
             .rawText,
         );
         setCorr(correct);
+        console.log(correct);
         setGuessed(false);
       } else {
         console.warn(request.status);
       }
       setLoading(false);
+      AsyncStorage.getItem('maxStreak').then(ms => {
+        setMaxStreak(parseInt(ms));
+      });
     };
     if (correct === 'nc') {
       request.open(
@@ -171,9 +183,13 @@ function Game({navigation}) {
         borderWidth: 10,
         borderColor: guessed ? (r ? 'green' : 'red') : 'transparent',
       }}>
+      <View style={styles.streak}>
+        <Text>Текущая серия: {streak}</Text>
+        <Text>Рекорд: {maxStreak}</Text>
+      </View>
       <View style={styles.ficname}>
         {isLoading ? (
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size="large" color={'#0000ff'} />
         ) : (
           <Text style={styles.fictitle}>{title}</Text>
         )}
@@ -196,6 +212,11 @@ function Game({navigation}) {
             }
             if (corr === 'nc') {
               setR(true);
+              setStreak(streak + 1);
+              if (streak >= maxStreak) {
+                setMaxStreak(streak + 1);
+                storeData('maxStreak', (streak + 1).toString());
+              }
               AsyncStorage.getItem('guessedNC').then(gn => {
                 storeData('guessedNC', (parseInt(gn) + 1).toString());
               });
@@ -203,6 +224,7 @@ function Game({navigation}) {
                 storeData('totalNC', (parseInt(gn) + 1).toString());
               });
             } else {
+              setStreak(0);
               setR(false);
               AsyncStorage.getItem('totalAngst').then(gn => {
                 storeData('totalAngst', (parseInt(gn) + 1).toString());
@@ -231,6 +253,11 @@ function Game({navigation}) {
             }
             if (corr === 'angst') {
               setR(true);
+              setStreak(streak + 1);
+              if (streak >= maxStreak) {
+                setMaxStreak(streak + 1);
+                storeData('maxStreak', (streak + 1).toString());
+              }
               AsyncStorage.getItem('guessedAngst').then(gn => {
                 storeData('guessedAngst', (parseInt(gn) + 1).toString());
               });
@@ -239,6 +266,7 @@ function Game({navigation}) {
               });
             } else {
               setR(false);
+              setStreak(0);
               AsyncStorage.getItem('totalNC').then(gn => {
                 storeData('totalNC', (parseInt(gn) + 1).toString());
               });
@@ -258,6 +286,12 @@ function Game({navigation}) {
 function Stats({navigation}) {
   // guessedNC, guessedAngst, totalNC, totalAngst
   const [s, setS] = useState([]);
+  const [maxStreak, setMaxStreak] = useState(0);
+
+  AsyncStorage.getItem('maxStreak').then(ms => {
+    setMaxStreak(parseInt(ms));
+  });
+
   if (s.length === 0) {
     getStats().then(stats => {
       console.log(stats);
@@ -281,6 +315,7 @@ function Stats({navigation}) {
           : '0'}
         %)
       </Text>
+      <Text style={styles.stat}>Лучшая серия: {maxStreak}</Text>
 
       <TouchableOpacity
         style={styles.resetBtn}
@@ -289,6 +324,7 @@ function Stats({navigation}) {
           storeData('guessedAngst', '0');
           storeData('totalNC', '0');
           storeData('totalAngst', '0');
+          storeData('maxStreak', '0');
           setS(['0', '0', '0', '0']);
         }}>
         <Text style={styles.resetBtnText}>Сброс</Text>
@@ -316,8 +352,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 50,
+    marginLeft: -10,
+    paddingHorizontal: 10,
+    width: deviceWidth,
   },
-  fictitle: {textAlign: 'center', fontSize: 20},
+  streak: {
+    height: 100,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 60,
+  },
+  fictitle: {textAlign: 'center', fontSize: 24},
   buttons: {
     display: 'flex',
     alignItems: 'center',
